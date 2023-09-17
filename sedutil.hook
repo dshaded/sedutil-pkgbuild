@@ -1,0 +1,75 @@
+#!/usr/bin/ash
+
+run_hook() {
+	msg  "OPAL Drives Unlock"
+
+	for block_device in $(list_block_devices) ; do
+		if is_opal_drive "$block_device" ; then
+			opal_unlock "$block_device" "$(get_block_device_info $block_device)"
+		fi
+	done
+
+	/usr/sbin/partprobe
+}
+
+list_block_devices() {
+	/usr/bin/find /dev/ -name "nvme[0-9]n[0-9]"
+	if [ $? != 0 ] ; then
+		msg "Unable to list block devices"
+	fi
+}
+
+is_opal_drive() {
+	sedutil-cli --query "$1" > /dev/null 2> /dev/null
+	return $?
+}
+
+get_block_device_info() {
+	sedutil-cli --query "$1" | gawk '/^\//{print;exit}'
+	if [ $? != 0 ] ; then
+		msg "Unable to query $1"
+	fi
+}
+
+opal_unlock() {
+	while true ; do
+		/usr/bin/stty -echo
+		echo -n "Password for $2 ($1): "
+		read -t 120 pass
+		if [ $? != 0 ] ; then
+			echo ''
+			msg "Password read timeout. Powering off..."
+			sleep 3
+			poweroff -f
+		fi
+		/usr/bin/stty echo
+		echo ''
+
+		sedutil-cli --setlockingrange 1 rw "$pass" "$1"
+		if [ $? != 0 ] ; then
+			msg "Failed to unlock root!"
+			continue
+		fi
+
+		sedutil-cli --setlockingrange 2 rw "$pass" "$1"
+		if [ $? != 0 ] ; then
+			msg "Failed to unlock /boot!"
+			sleep 2
+		fi
+
+		sedutil-cli --prepareForS3Sleep 1 "$pass" "$1"
+		if [ $? != 0 ] ; then
+			msg "Prepare for S3 failed for root"
+			sleep 2
+		fi
+
+		sedutil-cli --prepareForS3Sleep 2 "$pass" "$1"
+		if [ $? != 0 ] ; then
+			msg "Prepare for S3 failed for /boot"
+			sleep 2
+		fi
+
+		msg  "Unlocked!"
+		break
+	done
+}

@@ -1,8 +1,21 @@
-post_install() {
-cat <<EOF
-You must be administrator/root to run this program, in addition
-libata.allow_tpm must be set to 1. Either via adding libata.allow_tpm=1
-to the kernel flags at boot time or by setting the module option in the
-initramfs via a modprobe.conf file.
-EOF
+#!/bin/bash
+
+help() {
+    cat <<HELPEOF
+Unlock OPAL drives by prompting for password
+HELPEOF
+}
+
+build() {
+    add_binary /usr/bin/sedutil-cli
+    add_binary /usr/bin/clear
+    add_binary /usr/bin/find
+    add_binary /usr/bin/gawk
+    add_binary /usr/bin/grep
+    add_binary /usr/bin/readlink
+    add_binary /usr/bin/stty
+    add_binary /usr/bin/xargs
+    add_binary /usr/sbin/partprobe
+
+    add_runscript
 }

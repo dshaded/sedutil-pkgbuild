@@ -1,2 +1,6 @@
 sedutil*pkg.tar
 sedutil*tar.gz
+sedutil*tar.zst
+sedutil-*/
+pkg/
+src/

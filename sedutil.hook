@@ -8,8 +8,6 @@ run_hook() {
 			opal_unlock "$block_device" "$(get_block_device_info $block_device)"
 		fi
 	done
-
-	/usr/sbin/partprobe
 }
 
 list_block_devices() {
@@ -50,6 +48,8 @@ opal_unlock() {
 			msg "Failed to unlock root!"
 			continue
 		fi
+
+		/usr/sbin/partprobe
 
 		sedutil-cli --setlockingrange 2 rw "$pass" "$1"
 		if [ $? != 0 ] ; then

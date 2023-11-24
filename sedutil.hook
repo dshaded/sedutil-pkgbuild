@@ -4,7 +4,7 @@ run_hook() {
 	msg  "OPAL Drives Unlock"
 
 	for block_device in $(list_block_devices) ; do
-		if is_locked_opal_drive "$block_device" ; then
+		if is_opal_drive "$block_device" ; then
 			opal_unlock "$block_device" "$(get_block_device_info $block_device)"
 		fi
 	done
@@ -17,8 +17,8 @@ list_block_devices() {
 	fi
 }
 
-is_locked_opal_drive() {
-	sedutil-cli --query /dev/nvme0n1 2> /dev/null | grep 'Locked = Y' > /dev/null
+is_opal_drive() {
+	sedutil-cli --query "$1" > /dev/null 2>&1
 	return $?
 }
 
